@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.16)
-project(torky-core-continuum LANGUAGES CXX)
+project(torky-core-continuum CXX)
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+add_compile_options(-O3 -mavx512f -mavx512dq -Wall -Wextra)
+
 include_directories(include)
-add_executable(torky-continuum-cli src/torky_cli_kernel.cpp)
-target_compile_options(torky-continuum-cli PRIVATE -O3 -Wall -pthread)
+
+add_executable(test_continuum tests/test_continuum_simd.cpp)
