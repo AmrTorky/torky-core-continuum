@@ -7,7 +7,7 @@
 using namespace torky::core::continuum;
 
 void run_unit_tests() {
-    std::cout << "[TEST RUNNER] Starting torky-core-continuum verification suite..." << std::endl;
+    std::cout << "[TEST RUNNER] Starting torky-core-continuum dynamic fallback suite..." << std::endl;
 
     assert(sizeof(TorkyCellDtype) == 9);
     std::cout << "  [PASS] TorkyCellDtype strict 9-byte layout verified." << std::endl;
@@ -42,6 +42,6 @@ void run_benchmark() {
 int main() {
     run_unit_tests();
     run_benchmark();
-    std::cout << ">>> ALL TORKY-CORE-CONTINUUM KERNELS VERIFIED SUCCESSFULLY (v12.0.0-GA)!" << std::endl;
+    std::cout << ">>> ALL TORKY-CORE-CONTINUUM KERNELS PASSED WITHOUT SIGILL (v12.0.0-GA)!" << std::endl;
     return 0;
 }

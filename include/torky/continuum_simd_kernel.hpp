@@ -5,9 +5,9 @@
 #include <cstdint>
 #include <algorithm>
 
-#if defined(__AVX512F__) && defined(__AVX512DQ__)
+#if defined(__x86_64__) || defined(_M_X64)
 #include <immintrin.h>
-#define TORKY_HAS_AVX512 1
+#define TORKY_HAS_X86_INTRINSICS 1
 #endif
 
 namespace torky::core::continuum {
@@ -35,20 +35,43 @@ namespace torky::core::continuum {
             return 1.0 / std::sqrt((r_nm * r_nm) + EPSILON_NM2);
         }
 
+        // Dynamic SIMD batch evaluation with AVX-512, AVX2, and Scalar fallback
         static void evaluate_batch_avx512(const double* r_input, double* v_output, int count) {
             int i = 0;
-#if defined(TORKY_HAS_AVX512)
-            __m512d v_eps = _mm512_set1_pd(EPSILON_NM2);
-            __m512d v_one = _mm512_set1_pd(1.0);
-            for (; i <= count - 8; i += 8) {
-                __m512d r = _mm512_loadu_pd(r_input + i);
-                __m512d r2 = _mm512_mul_pd(r, r);
-                __m512d sum = _mm512_add_pd(r2, v_eps);
-                __m512d sq = _mm512_sqrt_pd(sum);
-                __m512d res = _mm512_div_pd(v_one, sq);
-                _mm512_storeu_pd(v_output + i, res);
+#if defined(TORKY_HAS_X86_INTRINSICS)
+            // Runtime CPU check to prevent SIGILL (Illegal instruction) on CPUs without AVX-512F or AVX2
+            bool has_avx512 = __builtin_cpu_supports("avx512f");
+            bool has_avx2   = __builtin_cpu_supports("avx2");
+
+            if (has_avx512) {
+#if defined(__AVX512F__) && defined(__AVX512DQ__)
+                __m512d v_eps = _mm512_set1_pd(EPSILON_NM2);
+                __m512d v_one = _mm512_set1_pd(1.0);
+                for (; i <= count - 8; i += 8) {
+                    __m512d r = _mm512_loadu_pd(r_input + i);
+                    __m512d r2 = _mm512_mul_pd(r, r);
+                    __m512d sum = _mm512_add_pd(r2, v_eps);
+                    __m512d sq = _mm512_sqrt_pd(sum);
+                    __m512d res = _mm512_div_pd(v_one, sq);
+                    _mm512_storeu_pd(v_output + i, res);
+                }
+#endif
+            } else if (has_avx2) {
+#if defined(__AVX2__)
+                __m256d v_eps = _mm256_set1_pd(EPSILON_NM2);
+                __m256d v_one = _mm256_set1_pd(1.0);
+                for (; i <= count - 4; i += 4) {
+                    __m256d r = _mm256_loadu_pd(r_input + i);
+                    __m256d r2 = _mm256_mul_pd(r, r);
+                    __m256d sum = _mm256_add_pd(r2, v_eps);
+                    __m256d sq = _mm256_sqrt_pd(sum);
+                    __m256d res = _mm256_div_pd(v_one, sq);
+                    _mm256_storeu_pd(v_output + i, res);
+                }
+#endif
             }
 #endif
+            // Scalar fallback loop for remaining elements or non-supported hardware
             for (; i < count; ++i) {
                 v_output[i] = evaluate_v_finite(r_input[i]);
             }
