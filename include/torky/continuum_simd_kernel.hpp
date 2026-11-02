@@ -7,7 +7,7 @@
 
 #if defined(__AVX512F__) && defined(__AVX512DQ__)
 #include <immintrin.h>
-##define TORKY_HAS_AVX512 1
+#define TORKY_HAS_AVX512 1
 #endif
 
 namespace torky::core::continuum {
@@ -35,10 +35,9 @@ namespace torky::core::continuum {
             return 1.0 / std::sqrt((r_nm * r_nm) + EPSILON_NM2);
         }
 
-        // AVX-512 Vectorized batch evaluation for 8 double values simultaneously
         static void evaluate_batch_avx512(const double* r_input, double* v_output, int count) {
             int i = 0;
-##if defined(TORKY_HAS_AVX512)
+#if defined(TORKY_HAS_AVX512)
             __m512d v_eps = _mm512_set1_pd(EPSILON_NM2);
             __m512d v_one = _mm512_set1_pd(1.0);
             for (; i <= count - 8; i += 8) {
@@ -49,8 +48,7 @@ namespace torky::core::continuum {
                 __m512d res = _mm512_div_pd(v_one, sq);
                 _mm512_storeu_pd(v_output + i, res);
             }
-##endif
-            // Scalar fallback for remaining elements
+#endif
             for (; i < count; ++i) {
                 v_output[i] = evaluate_v_finite(r_input[i]);
             }

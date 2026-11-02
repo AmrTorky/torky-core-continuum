@@ -1,4 +1,3 @@
-#iostream
 #include <iostream>
 #include <vector>
 #include <cassert>
@@ -10,25 +9,20 @@ using namespace torky::core::continuum;
 void run_unit_tests() {
     std::cout << "[TEST RUNNER] Starting torky-core-continuum verification suite..." << std::endl;
 
-    // 1. 9-byte structure verification
     assert(sizeof(TorkyCellDtype) == 9);
     std::cout << "  [PASS] TorkyCellDtype strict 9-byte layout verified." << std::endl;
 
-    // 2. V_finite singularity cap
     double v0 = ContinuumSimdKernel::evaluate_v_finite(0.0);
-    double expected_v0 = 1.0 / std::sqrt(EPSILON_NM2); // 1.0 / sqrt(0.016) = 7.9056... (capped potential)
     assert(v0 > 0.0);
     std::cout << "  [PASS] V_finite(0) evaluated cleanly: " << v0 << " eV (0.00% NaN loss)." << std::endl;
 
-    // 3. Cardano-Viète Root Solver
     double root = CardanoVieteSolver::solve_depressed_cubic(-3.0, 2.0);
     assert(!std::isnan(root));
     std::cout << "  [PASS] Cardano-Viète cubic root solver converged: x* = " << root << std::endl;
 
-    // 4. TSG Gate Authorization Logic
-    assert(TsgGateController::validate_authorization(0x01, false) == true);  // PROCEED
-    assert(TsgGateController::validate_authorization(0x04, false) == true);  // ESCALATE
-    assert(TsgGateController::validate_authorization(0x01, true) == false);   // Veto on tamper
+    assert(TsgGateController::validate_authorization(0x01, false) == true);
+    assert(TsgGateController::validate_authorization(0x04, false) == true);
+    assert(TsgGateController::validate_authorization(0x01, true) == false);
     std::cout << "  [PASS] TSG Gate registers (0x01 - 0x04) and veto interlocks verified." << std::endl;
 }
 
